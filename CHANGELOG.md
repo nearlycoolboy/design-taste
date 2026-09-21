@@ -4,6 +4,14 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Changed
+
+- Node floor raised from 20 to 22 (Node 20 reached end of life 2026-04-30); added `.nvmrc`.
+- `scripts/preflight.mjs` no longer follows symlinked files when walking a directory.
+- `reference/design-systems.md`: US public-sector row and install command now point at `@uswds/uswds` (v3) instead of the superseded `uswds` package.
+
 ## [2.0.0] - 2026-09-21
 
 ### Added

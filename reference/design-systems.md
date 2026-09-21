@@ -86,7 +86,7 @@ Once you have the design read (Section 0) and dials (Section 1), pick the right 
 | Atlassian / Jira-style product | `@atlaskit/*` + `@atlaskit/tokens` | Official Atlassian DS |
 | GitHub-style devtool / community page | `@primer/css` or `@primer/react-brand` | Official Primer; Brand variant for marketing |
 | Public-sector UK service | `govuk-frontend` | Legally / regulatorily expected |
-| US public-sector / trust-first | `uswds` | Same |
+| US public-sector / trust-first | `@uswds/uswds` | Same |
 | Fast local-business / agency MVP | Bootstrap 5.3 | Boring, fast, works |
 | Modern accessible React foundation | `@radix-ui/themes` | Primitives + polished theme |
 | Modern SaaS where you own the components | shadcn/ui (`npx shadcn@latest add ...`) | You own the code, easy to customise; never ship default state |
@@ -413,7 +413,7 @@ npm install @primer/react-brand
 npm install govuk-frontend
 
 # USWDS (US Web Design System)
-npm install uswds
+npm install @uswds/uswds
 
 # Atlassian Design System (Atlaskit)
 yarn add @atlaskit/css-reset @atlaskit/tokens @atlaskit/button @atlaskit/badge @atlaskit/section-message @atlaskit/card

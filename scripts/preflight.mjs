@@ -1,6 +1,6 @@
 // scripts/preflight.mjs
 //
-// Zero-dependency design-taste pre-flight scanner (Node 20+ ESM).
+// Zero-dependency design-taste pre-flight scanner (Node 22+ ESM).
 // Usage: node scripts/preflight.mjs <file-or-dir> [...more]
 //
 // HARD rules (any hit, any file -> exit 1): the em dash, `transition: all`,
@@ -51,6 +51,7 @@ function collectFiles(inputPaths) {
     if (stat.isDirectory()) {
       for (const entry of readdirSync(p, { withFileTypes: true })) {
         const full = join(p, entry.name);
+        if (entry.isSymbolicLink()) continue; // never follow links out of the scan root
         if (entry.isDirectory()) {
           if (SKIP_DIRS.has(entry.name)) continue;
           files.push(...collectFiles([full]));
