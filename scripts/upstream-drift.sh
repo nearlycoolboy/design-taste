@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # scripts/upstream-drift.sh
 #
-# Report-only: checks the four upstream files this skill ported or copied
+# Report-only: checks the five upstream files this skill ported or copied
 # from against the pinned hashes in scripts/upstream-snapshot.txt, and
 # prints OK / DRIFT / MISSING / UNREACHABLE per file. Never fails the build:
 # a 404 (a file that moved or was restructured upstream, e.g. impeccable's
@@ -23,7 +23,8 @@ MODE="${1:-report}"
 # One tracked upstream file per line: "<owner/repo> <path-in-repo>".
 TRACKED="emilkowalski/skill skills/emil-design-eng/SKILL.md
 pbakaus/impeccable .agent/skills/impeccable/SKILL.md
-pbakaus/impeccable .agent/skills/impeccable/reference/interaction-design.md
+pbakaus/impeccable .agent/skills/impeccable/reference/craft-floor.md
+pbakaus/impeccable .agent/skills/impeccable/reference/operate.md
 leonxlnx/taste-skill skills/taste-skill/SKILL.md"
 
 sha256() {

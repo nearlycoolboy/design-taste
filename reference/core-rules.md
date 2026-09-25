@@ -7,7 +7,7 @@
 LLMs default to clichés. Override these defaults proactively. Each rule has a context-aware override path.
 
 ### 4.1 Typography
-* **Display / Headlines:** Default `text-4xl md:text-6xl tracking-tighter leading-none`.
+* **Display / Headlines:** Default `text-4xl md:text-6xl tracking-tight leading-[1.1]`.
 * **Body / Paragraphs:** Default `text-base text-gray-600 leading-relaxed max-w-[65ch]`.
 * **Sans font choice:**
   * **Discouraged as default:** `Inter`. Pick `Geist`, `Outfit`, `Cabinet Grotesk`, `Satoshi`, or a brand-appropriate serif first.
@@ -58,6 +58,8 @@ LLMs default to clichés. Override these defaults proactively. Each rule has a c
 
 ### 4.8 Image & Visual Asset Strategy
 
+> **Persuade register only** for the image-first mandate, the logo wall and "hero needs a real visual": an Operate or Read surface owes no hero photography. The bans below (hand-rolled decorative SVGs, div-based fake screenshots) hold on every surface.
+
 Landing pages and portfolios are **visual products**. Text-only pages with fake-screenshot divs are slop.
 
 **Priority order for visual assets:**
@@ -93,6 +95,8 @@ Landing pages and portfolios are **visual products**. Text-only pages with fake-
 **Hero needs a real visual.** Text + gradient blob is not a hero - it's a placeholder.
 
 ### 4.9 Content Density
+
+> **Persuade register only.** On Operate and Read surfaces, ignore this section: dense tables, stat cards and label-heavy panels are correct there.
 
 Landing pages live on the **first impression**, not the full read. Cut ruthlessly.
 
@@ -156,7 +160,7 @@ The brief and brand decide. This skill enforces only:
 
 ### 8.C Default Mode
 
-Respect `prefers-color-scheme` unless the brand insists. Add a manual toggle if either mode would lose key brand expression.
+Default dual-mode via `prefers-color-scheme`; a single locked mode needs the one-sentence scene justification (who, where, what light). Add a manual toggle if either mode would lose key brand expression.
 
 ### 8.D Test in Both Modes Before Finishing
 

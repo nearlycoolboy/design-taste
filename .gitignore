@@ -2,3 +2,7 @@
 node_modules/
 *.log
 .forge/
+.codegraph/
+.cursor/
+.claude/settings.local.json
+.claude/memory/

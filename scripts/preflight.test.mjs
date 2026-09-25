@@ -33,6 +33,43 @@ function withTempFile(content, ext) {
   return { dir, path };
 }
 
+// Slice of content between a `## <heading>` line and the next `^## ` heading
+// (or end of file). Used by both the Core self-containment test and the
+// routing-table cite test so they scope to exactly the same section.
+function sectionSlice(content, heading) {
+  const headings = [...content.matchAll(/^## .*$/gm)];
+  const idx = headings.findIndex((m) => m[0].startsWith(heading));
+  if (idx < 0) return null;
+  const start = headings[idx].index + headings[idx][0].length;
+  const end = idx + 1 < headings.length ? headings[idx + 1].index : content.length;
+  return content.slice(start, end);
+}
+
+// First markdown table (contiguous run of `|`-prefixed lines) after `heading`.
+function firstTableAfter(content, heading) {
+  const idx = content.indexOf(heading);
+  if (idx < 0) return [];
+  const rows = [];
+  let started = false;
+  for (const line of content.slice(idx).split("\n")) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("|")) {
+      started = true;
+      rows.push(trimmed);
+    } else if (started) {
+      break;
+    }
+  }
+  return rows;
+}
+
+function parseTableRow(row) {
+  return row
+    .split("|")
+    .slice(1, -1)
+    .map((c) => c.trim());
+}
+
 // -- (a) each HARD rule fires on dirty.html, exit 1 --------------------
 
 test("dirty.html fixture: every HARD rule fires, exit 1", () => {
@@ -119,7 +156,12 @@ test("Tailwind, JSX-object and HTML-entity spellings of banned patterns are caug
   try {
     const { stdout, status } = run([path]);
     assert.equal(status, 1);
-    for (const rule of ["TRANSITION_ALL", "OUTLINE_NONE_NO_FOCUS_VISIBLE", "Z_INDEX_999", "SCALE_ZERO_ENTRY", "EM_DASH"]) {
+    // OUTLINE_NONE_NO_FOCUS_VISIBLE is intentionally not asserted here: its
+    // HARD-vs-WARN verdict now depends on file-wide focus-visible context,
+    // which the dedicated "outline semantics" test below covers exhaustively.
+    // This test's job is spelling coverage (Tailwind/JS-object/HTML-entity),
+    // not outline verdict semantics.
+    for (const rule of ["TRANSITION_ALL", "Z_INDEX_999", "SCALE_ZERO_ENTRY", "EM_DASH"]) {
       assert.match(stdout, new RegExp(rule), `expected ${rule} to be reported`);
     }
     assert.equal((stdout.match(/Z_INDEX_999/g) ?? []).length, 2, "z-[9999] and zIndex: 9999");
@@ -232,15 +274,208 @@ test("every reference/*.md path mentioned resolves to an existing file", () => {
   assert.deepEqual(missing, []);
 });
 
-// -- pre-flight split: React-only tokens live only inside Addendum B -------
+// -- pre-flight split: Core is self-contained, stack tokens live only in the
+// -- React / Next addendum ---------------------------------------------
 
-test("pre-flight.md: React/Tailwind-only tokens appear only inside Addendum B", () => {
+test("pre-flight.md: Universal Core is self-contained; stack tokens live only in Addendum: React / Next", () => {
   const content = readFileSync(join(ROOT, "reference", "pre-flight.md"), "utf8");
-  const bIndex = content.indexOf("## Addendum B");
-  assert.ok(bIndex > 0, "Addendum B heading missing");
-  const beforeB = content.slice(0, bIndex);
+
+  const coreSlice = sectionSlice(content, "## Pre-Flight: Universal Core");
+  assert.ok(coreSlice !== null, "Universal Core heading missing");
+  for (const token of [
+    "nav height",
+    "80px",
+    "hero",
+    "Hero",
+    "logo wall",
+    "marquee",
+    "bento",
+    "useScroll",
+    "GSAP",
+    "use client",
+    "useEffect",
+  ]) {
+    assert.ok(!coreSlice.includes(token), `${token} found inside Universal Core`);
+  }
+
+  const stackIndex = content.indexOf("## Addendum: React / Next");
+  assert.ok(stackIndex > 0, "Addendum: React / Next heading missing");
+  const beforeStack = content.slice(0, stackIndex);
   for (const token of ["use client", "useEffect", "GSAP", "leading-[", "pb-1", "h-screen", "min-h-["]) {
-    assert.ok(!beforeB.includes(token), `${token} found outside Addendum B`);
+    assert.ok(!beforeStack.includes(token), `${token} found outside Addendum: React / Next`);
+  }
+});
+
+// -- SKILL.md routing table: four mode rows, all load pre-flight.md, and ---
+// -- every Core cite resolves inside the intersection of their Load cells --
+
+test("SKILL.md Routing table: four mode rows, every row loads pre-flight.md, Core cites resolve within the intersection", () => {
+  const skillContent = readFileSync(join(ROOT, "SKILL.md"), "utf8");
+  const rows = firstTableAfter(skillContent, "## Routing");
+  assert.ok(rows.length > 2, "no routing table found after ## Routing");
+  const dataRows = rows.slice(2).map(parseTableRow); // drop header + separator row
+  assert.equal(dataRows.length, 4, `expected exactly 4 mode rows, got ${dataRows.length}`);
+
+  const modeNames = dataRows.map((cells) => cells[0].replace(/\*/g, "").trim());
+  assert.deepEqual(modeNames, ["Persuade", "Operate", "Read", "Experience"]);
+
+  const refRe = /reference\/[A-Za-z0-9_-]+\.md/g;
+  const loadCell = dataRows.map((cells) => cells[3] ?? "");
+  const perRowFiles = loadCell.map((cell) => new Set([...cell.matchAll(refRe)].map((m) => m[0])));
+  perRowFiles.forEach((files, i) => {
+    assert.ok(files.has("reference/pre-flight.md"), `${modeNames[i]} row must load reference/pre-flight.md`);
+  });
+
+  let intersection = perRowFiles[0];
+  for (const files of perRowFiles.slice(1)) {
+    intersection = new Set([...intersection].filter((f) => files.has(f)));
+  }
+
+  const preFlightContent = readFileSync(join(ROOT, "reference", "pre-flight.md"), "utf8");
+  const coreSlice = sectionSlice(preFlightContent, "## Pre-Flight: Universal Core");
+  assert.ok(coreSlice !== null, "Universal Core heading missing");
+
+  const allowedHeadingNumbers = new Set();
+  for (const f of intersection) {
+    const content = readFileSync(join(ROOT, f), "utf8");
+    for (const n of collectHeadingNumbers(content)) allowedHeadingNumbers.add(n);
+  }
+
+  const unresolved = [];
+  for (const cite of collectCites(coreSlice)) {
+    const major = cite.split(".")[0];
+    if (!allowedHeadingNumbers.has(cite) && !allowedHeadingNumbers.has(major)) unresolved.push(cite);
+  }
+  assert.deepEqual(unresolved, []);
+});
+
+// -- z-index semantics: magic-number family hard-fails, scaled values pass -
+
+test("z-index semantics: magic 999/9999 hard-fails, a --z- token silences the warning, unscaled >=1000 warns", () => {
+  const scaled = [":root { --z-modal: 1400; }", ".tooltip { z-index: 1400; }"].join("\n");
+  const { dir: dir1, path: path1 } = withTempFile(scaled, ".css");
+  try {
+    const { stdout, status } = run([path1]);
+    assert.equal(status, 0, stdout);
+    assert.doesNotMatch(stdout, /Z_INDEX_999|Z_INDEX_UNSCALED/, "a --z- token must silence the warning");
+  } finally {
+    rmSync(dir1, { recursive: true, force: true });
+  }
+
+  const unscaled = ".tooltip { z-index: 1400; }\n";
+  const { dir: dir2, path: path2 } = withTempFile(unscaled, ".css");
+  try {
+    const { stdout, status } = run([path2]);
+    assert.equal(status, 0, stdout);
+    assert.match(stdout, /WARN:Z_INDEX_UNSCALED/);
+  } finally {
+    rmSync(dir2, { recursive: true, force: true });
+  }
+
+  const magic = ".modal { z-index: 9999; }\n";
+  const { dir: dir3, path: path3 } = withTempFile(magic, ".css");
+  try {
+    const { stdout, status } = run([path3]);
+    assert.equal(status, 1);
+    assert.match(stdout, /Z_INDEX_999/);
+  } finally {
+    rmSync(dir3, { recursive: true, force: true });
+  }
+});
+
+// -- outline semantics: per-selector escape hatch, demoted to WARN when the -
+// -- ring is not in the file at all -------------------------------------
+
+test("outline semantics: per-selector focus-visible escape hatch; WARN when the ring is elsewhere or absent", () => {
+  const sameAttribute = '<button className="outline-none focus-visible:ring-2">Go</button>\n';
+  const { dir: dir1, path: path1 } = withTempFile(sameAttribute, ".tsx");
+  try {
+    const { stdout, status } = run([path1]);
+    assert.equal(status, 0, stdout);
+  } finally {
+    rmSync(dir1, { recursive: true, force: true });
+  }
+
+  const differentSelector = [".a { outline: 0px; }", ".b:focus-visible { outline: 2px solid blue; }"].join("\n");
+  const { dir: dir2, path: path2 } = withTempFile(differentSelector, ".css");
+  try {
+    const { stdout, status } = run([path2]);
+    assert.equal(status, 1, stdout);
+    assert.match(stdout, /OUTLINE_NONE_NO_FOCUS_VISIBLE/);
+  } finally {
+    rmSync(dir2, { recursive: true, force: true });
+  }
+
+  const noRingInFile = ".card { outline: none; }\n";
+  const { dir: dir3, path: path3 } = withTempFile(noRingInFile, ".css");
+  try {
+    const { stdout, status } = run([path3]);
+    assert.equal(status, 0, stdout);
+    assert.match(stdout, /WARN:OUTLINE_NONE_RING_NOT_IN_FILE/);
+  } finally {
+    rmSync(dir3, { recursive: true, force: true });
+  }
+});
+
+// -- the 8 new rules; #000dea stays clean; .ts/.astro scan as code; --------
+// -- .mdx is prose-only but still bans U+2014 -----------------------------
+
+test("8 new rules fire on dirty.html; #000dea is clean; .ts/.astro scan as code; .mdx is prose-only", () => {
+  const { stdout, status } = run(["scripts/fixtures/dirty.html"]);
+  assert.equal(status, 1);
+  for (const rule of [
+    "SCROLL_LISTENER",
+    "GRADIENT_TEXT",
+    "SIDE_STRIPE_BORDER",
+    "REPEATING_GRADIENT",
+    "FE_TURBULENCE",
+    "CURSOR_IMAGE",
+    "WARN:PURE_BLACK_WHITE",
+    "WARN:GOOGLE_FONTS_LINK",
+  ]) {
+    assert.match(stdout, new RegExp(rule), `expected ${rule} to be reported`);
+  }
+
+  const { dir: dir1, path: path1 } = withTempFile(".badge { color: #000dea; }\n", ".css");
+  try {
+    const { stdout: out1 } = run([path1]);
+    assert.doesNotMatch(out1, /PURE_BLACK_WHITE/, "#000dea must not be flagged as pure black/white");
+  } finally {
+    rmSync(dir1, { recursive: true, force: true });
+  }
+
+  const { dir: dir2, path: path2 } = withTempFile("addEventListener('scroll', onScroll);\n", ".ts");
+  try {
+    const { stdout: out2, status: status2 } = run([path2]);
+    assert.equal(status2, 1);
+    assert.match(out2, /SCROLL_LISTENER/, ".ts must be scanned as code");
+  } finally {
+    rmSync(dir2, { recursive: true, force: true });
+  }
+
+  const { dir: dir3, path: path3 } = withTempFile(
+    "<script>\n  addEventListener('scroll', onScroll);\n</script>\n",
+    ".astro"
+  );
+  try {
+    const { stdout: out3, status: status3 } = run([path3]);
+    assert.equal(status3, 1);
+    assert.match(out3, /SCROLL_LISTENER/, ".astro must be scanned as code");
+  } finally {
+    rmSync(dir3, { recursive: true, force: true });
+  }
+
+  const mdxContent = `A gradient text example: \`background-clip: text\`.\nAn em dash example ${String.fromCharCode(
+    0x2014
+  )} here.\n`;
+  const { dir: dir4, path: path4 } = withTempFile(mdxContent, ".mdx");
+  try {
+    const { stdout: out4, status: status4 } = run([path4]);
+    assert.equal(status4, 1, ".mdx must still fail on U+2014");
+    assert.match(out4, /EM_DASH/);
+    assert.doesNotMatch(out4, /GRADIENT_TEXT/, ".mdx must not run code-authoring rules");
+  } finally {
+    rmSync(dir4, { recursive: true, force: true });
   }
 });
 
@@ -252,6 +487,7 @@ test("zero U+2014 (em dash) across SKILL.md, README.md, NOTICE, reference/*.md",
     "SKILL.md",
     "README.md",
     "NOTICE",
+    "CHANGELOG.md",
     ...readdirSync(join(ROOT, "reference"))
       .filter((f) => f.endsWith(".md"))
       .map((f) => join("reference", f)),

@@ -101,6 +101,7 @@ The modern solution uses the CSS Anchor Positioning API to tether an overlay to 
   position: fixed;
   position-anchor: --menu-trigger;
   position-area: block-end span-inline-end;
+  position-try-fallbacks: --flip-above;
   margin-top: 4px;
 }
 
@@ -111,7 +112,7 @@ The modern solution uses the CSS Anchor Positioning API to tether an overlay to 
 }
 ```
 
-Because the dropdown uses `position: fixed`, it escapes any `overflow` clipping on ancestor elements. The `@position-try` block handles viewport edges automatically. **Browser support**: Chrome 125+, Edge 125+. Not yet in Firefox or Safari - use a fallback for those browsers.
+Because the dropdown uses `position: fixed`, it escapes any `overflow` clipping on ancestor elements. The `@position-try` block handles viewport edges automatically. **Browser support**: Chromium 125+, Safari 26+; verify Firefox before relying on it, and keep the fixed-position fallback below.
 
 ### Popover + Anchor Combo
 

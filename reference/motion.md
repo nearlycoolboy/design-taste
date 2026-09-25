@@ -10,7 +10,7 @@ Taste is trained, not innate; unseen details compound; beauty is leverage. Full 
 
 Before writing any animation code, answer these questions in order:
 
-### 1. Should this animate at all?
+### Step one: should this animate at all?
 
 **Ask:** How often will users see this animation?
 
@@ -25,7 +25,7 @@ Before writing any animation code, answer these questions in order:
 
 Raycast has no open/close animation. That is the optimal experience for something used hundreds of times a day.
 
-### 2. What is the purpose?
+### Step two: what is the purpose?
 
 Every animation must have a clear answer to "why does this animate?"
 
@@ -39,7 +39,7 @@ Valid purposes:
 
 If the purpose is just "it looks cool" and the user will see it often, don't animate.
 
-### 3. What easing should it use?
+### Step three: what easing should it use?
 
 Is the element entering or exiting?
   Yes → ease-out (starts fast, feels responsive)
@@ -69,7 +69,7 @@ Is the element entering or exiting?
 
 **Easing curve resources:** Don't create curves from scratch. Use [easing.dev](https://easing.dev/) or [easings.co](https://easings.co/) to find stronger custom variants of standard easings.
 
-### 4. How fast should it be?
+### Step four: how fast should it be?
 
 | Element                  | Duration      |
 | ------------------------ | ------------- |

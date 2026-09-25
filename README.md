@@ -27,7 +27,7 @@ design-taste/
 │   ├── anti-slop.md               # The ban + AI-tells catalogue (impeccable + taste-skill)
 │   ├── core-rules.md              # Design engineering directives + dark mode protocol (taste-skill Sections 4, 8)
 │   ├── design-systems.md          # Brief read, dials, real-vs-fake design systems, GSAP skeletons, redesign protocol (taste-skill)
-│   └── pre-flight.md              # Review format + pre-flight core/addenda (emil + taste-skill)
+│   └── pre-flight.md              # Review format + pre-flight core/mode addenda (emil + taste-skill + impeccable)
 └── scripts/
     ├── preflight.mjs              # Zero-dependency pre-flight scanner (run this before shipping)
     └── upstream-drift.sh          # Report-only drift check against the three upstream sources
@@ -68,9 +68,9 @@ This is a **mixed-license** package, because the upstream sources use different 
 
 | Part | Source | License |
 |------|--------|---------|
-| `SKILL.md`, `README.md` (new synthesis) | - | **MIT** ([`LICENSE`](LICENSE)) |
+| `README.md` (new synthesis) | - | **MIT** ([`LICENSE`](LICENSE)) |
 | `reference/motion.md` | [emilkowalski/skill](https://github.com/emilkowalski/skill) | MIT |
-| `reference/interaction-states.md`, `reference/anti-slop.md` (Part 1) | [pbakaus/impeccable](https://github.com/pbakaus/impeccable) | **Apache-2.0** ([`LICENSES/Apache-2.0.txt`](LICENSES/Apache-2.0.txt)) |
-| `reference/anti-slop.md` (Part 2), `reference/core-rules.md`, `reference/design-systems.md`, `reference/pre-flight.md` | [leonxlnx/taste-skill](https://github.com/leonxlnx/taste-skill) | MIT |
+| `SKILL.md` (the Core design rules passages itemized in `NOTICE`, Routing mode register), `reference/interaction-states.md`, `reference/anti-slop.md` (Part 1), `reference/pre-flight.md` (Addendum: Operate) | [pbakaus/impeccable](https://github.com/pbakaus/impeccable) | **Apache-2.0** ([`LICENSES/Apache-2.0.txt`](LICENSES/Apache-2.0.txt)) |
+| `SKILL.md` (remainder, new synthesis), `reference/anti-slop.md` (Part 2), `reference/core-rules.md`, `reference/design-systems.md`, `reference/pre-flight.md` (remainder) | [leonxlnx/taste-skill](https://github.com/leonxlnx/taste-skill) / new synthesis | MIT |
 
 The original synthesis is © 2026 Nguyễn Phú Cường under MIT. The impeccable-derived files remain under Apache-2.0 (impeccable itself derives, in part, from Anthropic's `frontend-design` skill, also Apache-2.0, attribution preserved transitively in `NOTICE`). When redistributing, keep `LICENSE`, `LICENSES/Apache-2.0.txt`, and `NOTICE` together.

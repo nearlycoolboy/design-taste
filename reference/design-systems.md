@@ -63,6 +63,7 @@ After the design read, set three dials. Every layout, motion, and density decisi
 | Portfolio (Developer) | 6 | 5 | 4 |
 | Editorial / Blog | 6 | 4 | 3 |
 | Public-sector service | 3 | 2 | 5 |
+| Product UI / dashboard (Operate) | 3-5 | 3-4 | 5-7 |
 | Redesign - preserve | match | match+1 | match |
 | Redesign - overhaul | +2 | +2 | match |
 
@@ -134,7 +135,7 @@ Unless the design read picks a real design system (Section 2.A), these are the d
 
 ### 3.C Icons
 * **Allowed libraries (priority order):** `@phosphor-icons/react`, `hugeicons-react`, `@radix-ui/react-icons`, `@tabler/icons-react`.
-* **Discouraged:** `lucide-react`. Acceptable only when the user explicitly asks for it or the project already depends on it.
+* **Discouraged:** `lucide-react`. Acceptable only when the user explicitly asks for it or the project already depends on it. shadcn/ui projects keep `lucide-react` as the single icon family.
 * **NEVER hand-roll SVG icons.** If a glyph is missing, install a second library or compose from primitives - do not draw icon paths from scratch.
 * **One family per project.** Do not mix Phosphor with Lucide in the same component tree.
 * **Standardize `strokeWidth` globally** (e.g. `1.5` or `2.0`).
@@ -176,14 +177,6 @@ export function StickyStack({ cards }: { cards: React.ReactNode[] }) {
       const cardEls = gsap.utils.toArray<HTMLElement>(".stack-card");
       cardEls.forEach((card, i) => {
         if (i === cardEls.length - 1) return;
-        ScrollTrigger.create({
-          trigger: card,
-          start: "top top",                              // pin at viewport top
-          endTrigger: cardEls[cardEls.length - 1],
-          end: "top top",
-          pin: true,
-          pinSpacing: false,
-        });
         gsap.to(card, {
           scale: 0.92,
           opacity: 0.55,
@@ -215,7 +208,7 @@ export function StickyStack({ cards }: { cards: React.ReactNode[] }) {
 }
 ```
 
-Critical points: `start: "top top"`, `pin: true`, every card except the last is pinned, the scale/opacity transform is driven by the NEXT card's scroll trigger (so previous card shrinks as next one arrives).
+Critical points: CSS `sticky top-0` handles the pin (no GSAP `pin`, no standalone `ScrollTrigger.create`), and the scale/opacity transform on each card is driven by the NEXT card's scroll trigger (`start: "top bottom"`, `end: "top top"`, `scrub: true`), so the previous card shrinks as the next one arrives.
 
 ### 5.B Horizontal-Pan - Canonical Skeleton
 
@@ -363,7 +356,7 @@ Apply in order - stop when the brief is satisfied:
 2. **Spacing & rhythm** - increase section padding, fix vertical rhythm.
 3. **Color recalibration** - desaturate, unify neutrals, keep brand accent.
 4. **Motion layer** - add `MOTION_INTENSITY`-appropriate micro-interactions to existing components.
-5. **Hero & key-section recomposition** - restructure top-of-funnel using Section 10 vocabulary.
+5. **Hero & key-section recomposition** - restructure top-of-funnel using `reference/pre-flight.md`'s Addendum: Persuade hero boxes.
 6. **Full block replacement** - only when the existing block is unsalvageable.
 
 ### 11.E Decision Tree: Targeted Evolution vs Full Redesign

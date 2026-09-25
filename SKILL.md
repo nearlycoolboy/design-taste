@@ -3,7 +3,7 @@ name: design-taste
 description: Elite frontend design taste for building, reviewing, and polishing web interfaces. Use whenever the user wants to design, redesign, shape, critique, audit, polish, or improve any UI (landing pages, portfolios, dashboards, product UI, components, forms, onboarding, empty states) or asks to make something look better / premium / modern, fix the styling, add or fix animations, or make a design feel less generic ("AI slop"). Covers typography, color, spacing, layout, visual hierarchy, motion, micro-interactions, component states, accessibility, responsive behavior, UX copy, and anti-pattern detection.
 license: MIT AND Apache-2.0
 metadata:
-  version: "2.0.0"
+  version: "2.1.0"
 ---
 
 # Design & Taste
@@ -37,7 +37,7 @@ Most LLM design output is bad because the model jumps to a default aesthetic ins
 
 Infer from: page kind, vibe words the user used, reference URLs/products they named, audience, existing brand assets, and hard constraints (accessibility-first, public-sector, regulated → these override aesthetic preference). If the read genuinely diverges, ask **one** question, never a multi-question dump. If you can confidently infer, declare the read and proceed.
 
-Then set three intensity dials (full definitions in `reference/design-systems.md`):
+Then set three intensity dials (baseline 8 / 6 / 4, overridden by the mode row in Routing below; full definitions in `reference/design-systems.md`):
 - **DESIGN_VARIANCE** (1 symmetric → 10 asymmetric)
 - **MOTION_INTENSITY** (1 static → 10 cinematic)
 - **VISUAL_DENSITY** (1 airy → 10 packed)
@@ -58,20 +58,19 @@ The bias-correction rules that keep the build from drifting back to AI defaults 
 - **Verify contrast.** Body ≥4.5:1; large text (≥18px or bold ≥14px) ≥3:1. Placeholder text needs 4.5:1 too. Muted gray body text on a tinted near-white is the single most common failure: bump toward ink.
 - One accent color, locked across the whole page. Saturation < ~80% by default. Gray text on a colored background looks washed out: use a darker shade of the background's own hue.
 - Prefer OKLCH. Tint neutrals slightly toward the brand hue (0.005-0.015 chroma), not reflexively warm.
-- No pure `#000` / `#fff`: use off-black and off-white for depth. Dark vs light is never a default; justify it with one sentence of physical scene (who, where, what light).
+- No pure `#000` / `#fff`: use off-black and off-white for depth. Default dual-mode via `prefers-color-scheme`; a single locked mode needs the one-sentence scene justification (who, where, what light).
 - Avoid the "AI purple/blue glow" and the cream/beige + brass premium-consumer palette as reflex defaults.
 
 ### Layout & spacing
 - Consistent spacing scale (4px/8px base). Vary spacing for rhythm; generous whitespace.
 - Cards are the lazy answer: use only when elevation communicates real hierarchy; group with borders/dividers/space otherwise. **Nested cards are always wrong.**
 - Flexbox for 1D, Grid for 2D. Responsive grids without breakpoints: `repeat(auto-fit, minmax(280px, 1fr))`.
-- One corner-radius system per page; cards top out at 12-16px. Semantic z-index scale (dropdown→sticky→modal→toast→tooltip), never `999`/`9999`.
-- Hero fits the viewport: headline ≤2 lines, subtext ≤20 words, CTA visible without scroll. Nav on one line at desktop, ≤80px tall.
+- One corner-radius system per page; cards top out at 12-16px. Semantic z-index scale (dropdown→sticky→modal→toast→tooltip): never magic `999`/`9999`; document the scale as tokens.
 
 ### Motion (summary: full craft in `reference/motion.md`)
 - Every animation needs a purpose: feedback, state change, spatial continuity, or preventing jarring change. "It looks cool" + seen-often = don't animate. **Never animate keyboard-initiated actions.**
 - UI animations stay under 300ms. Use **ease-out** for enter/exit (responsive); never `ease-in` on UI. Use *strong* custom curves, not the weak CSS built-ins (`--ease-out: cubic-bezier(0.23, 1, 0.32, 1)`).
-- Animate **only `transform` and `opacity`** (GPU). Never animate `width/height/top/left/margin/padding`.
+- Default to `transform` and `opacity`. `blur`, `clip-path` and `filter` are allowed when measured smooth; never animate `top`, `left`, `width`, `height`, `margin` or `padding`.
 - Never animate from `scale(0)`: start at `scale(0.95)` + opacity. Buttons get `:active { transform: scale(0.97) }`. Popovers scale from their trigger origin (modals stay centered).
 - Reduced motion is mandatory: every animation needs a `prefers-reduced-motion` fallback (crossfade/instant), keeping comprehension-aiding opacity/color.
 
@@ -90,19 +89,25 @@ A concrete match-and-refuse catalogue lives in `reference/anti-slop.md`: the abs
 
 ## Routing
 
-| Task | Load | Pre-flight register |
-|------|------|----------------------|
-| New landing page | `reference/design-systems.md`, `reference/core-rules.md`, `reference/anti-slop.md` | Core + Addendum A |
-| Dashboard / product UI | `reference/core-rules.md`, `reference/interaction-states.md` | Core |
-| Component / form | `reference/interaction-states.md` | Core |
-| Animation work | `reference/motion.md`, `reference/design-systems.md` (scroll skeletons) | Core (+B if React/Next) |
-| Redesign | `reference/design-systems.md` (§11 redesign protocol), then the row for the page kind | Core (+A/+B to match the page) |
-| Review / critique | `reference/pre-flight.md`, `reference/anti-slop.md` | Core (+A/+B to match the page) |
-| Plain HTML artifact | `reference/core-rules.md`, `reference/anti-slop.md` | Core (+A if it is a landing page) |
-| React / Next app | `reference/design-systems.md` (§3 stack conventions) | Core + Addendum B (+A if it is a landing page) |
-| Polish pass | `reference/pre-flight.md`, `reference/motion.md`, `reference/interaction-states.md` | Core (+A/+B to match the page) |
+Pick the mode from the surface you were asked for, not the product: a tool's landing page is Persuade, a fashion house's docs are Read.
 
-Pre-flight registers (`reference/pre-flight.md`): Core = universal, Addendum A = landing/marketing pages, Addendum B = React/Next. A and B compose: pick the page-kind addendum and the stack addendum independently.
+| Mode | Surface | Dials variance / motion / density | Load | Pre-flight |
+|------|---------|-------------|------|------------|
+| Persuade | landing, marketing, pricing, campaign, portfolio | 7-9 / 6-8 / 3-5 | `reference/pre-flight.md`, `reference/core-rules.md`, `reference/anti-slop.md`, `reference/design-systems.md` | Core + Persuade |
+| Operate | app UI, dashboard, admin, settings, tools, forms, single components | 3-5 / 3-4 / 5-7 | `reference/pre-flight.md`, `reference/core-rules.md`, `reference/anti-slop.md`, `reference/design-systems.md`, `reference/interaction-states.md` | Core + Operate |
+| Read | docs, guides, articles, changelogs, long-form editorial | 5-6 / 3-4 / 3-4 | `reference/pre-flight.md`, `reference/core-rules.md`, `reference/anti-slop.md`, `reference/design-systems.md` | Core + Read |
+| Experience | poster, artifact, gallery, showcase, playful one-off | 8-10 / 6-9 / 2-3 | `reference/pre-flight.md`, `reference/core-rules.md`, `reference/anti-slop.md` | Core + Experience |
+
+Orthogonal adds (stack or task type, not a mode; compose with the row above):
+
+| When | Also load | Also run |
+|------|-----------|----------|
+| React / Next stack | `reference/design-systems.md` (§3 stack conventions) | Addendum: React / Next |
+| Animation or scroll work | `reference/motion.md`, `reference/design-systems.md` (§5 scroll skeletons) | - |
+| Redesign | `reference/design-systems.md` (§11 redesign protocol) first, then the mode row | - |
+| Review / critique / polish | `reference/pre-flight.md`, `reference/anti-slop.md`, `reference/interaction-states.md` | the mode's register |
+
+Pre-flight registers (`reference/pre-flight.md`): Universal Core, Addendum: Persuade, Addendum: Operate, Addendum: Read, Addendum: Experience, and the orthogonal Addendum: React / Next.
 
 **Section index** (section numbers are a repo-wide namespace, not per-file; a "Section N" cite resolves here):
 
@@ -112,7 +117,8 @@ Pre-flight registers (`reference/pre-flight.md`): Core = universal, Addendum A =
 | §4, §8 | `reference/core-rules.md` |
 | §9 | `reference/anti-slop.md` |
 | §14 | `reference/pre-flight.md` |
-| §6 | This file's Motion bullets + `reference/motion.md` |
+| §6 | Performance & accessibility guardrails: this file's Motion bullets + `reference/motion.md` |
+| §4.3, §4.5, §4.6, §4.7, §4.10 | Upstream subsections with no local heading (do not cite; 4.5 and 4.6 are folded into `reference/pre-flight.md` Addendum: Operate) |
 | §10, §12, §13 | Not ported (upstream taste-skill v2 only) |
 
 ## How to execute a task
